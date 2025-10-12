@@ -9,6 +9,16 @@ import {
   InvoiceStatus,
   ItemType,
   PaymentInstructions,
+  SlaService,
+  SlaConfiguration,
+  SlaIncident,
+  SlaMetric,
+  SlaCredit,
+  SlaReport,
+  SlaMetricType,
+  SlaIncidentSeverity,
+  SlaIncidentStatus,
+  SlaReportType
 } from "@/lib/invoice-types"
 
 function toItem(row: unknown): Item {
@@ -477,4 +487,378 @@ export async function fetchInvoiceById(invoiceId: string, userId: string) {
     client: mapClientRow(invoice.client),
     settings: settings
   }
+}
+// SLA Mapper Functions
+export function mapSlaServiceRow(row: unknown): SlaService {
+  const slaService = row as {
+    id: string
+    name: string
+    description: string | null
+    client_id: string
+    availability_target: number
+    response_time_target: number | null
+    resolution_time_target: number | null
+    monthly_service_fee: number
+    is_active: boolean
+    created_at: string
+    updated_at: string
+    client?: {
+      id: string
+      name: string
+      company: string
+      email: string
+      phone: string
+    }
+    sla_configurations?: Array<{
+      id: string
+      credit_tiers: any
+      check_interval_seconds: number
+      alert_thresholds: any
+      business_hours_only: boolean
+      exclude_maintenance_windows: boolean
+      notification_emails: string[]
+    }>
+  }
+
+  return {
+    id: slaService.id,
+    name: slaService.name,
+    description: slaService.description ?? undefined,
+    clientId: slaService.client_id,
+    availabilityTarget: slaService.availability_target,
+    responseTimeTarget: slaService.response_time_target ?? undefined,
+    resolutionTimeTarget: slaService.resolution_time_target ?? undefined,
+    monthlyServiceFee: slaService.monthly_service_fee,
+    isActive: slaService.is_active,
+    createdAt: slaService.created_at,
+    updatedAt: slaService.updated_at,
+    client: slaService.client ? mapClientRow(slaService.client) : undefined,
+    configuration: slaService.sla_configurations?.[0] ? mapSlaConfigurationRow(slaService.sla_configurations[0]) : undefined,
+  }
+}
+
+export function mapSlaConfigurationRow(row: unknown): SlaConfiguration {
+  const config = row as {
+    id: string
+    sla_service_id: string
+    credit_tiers: any
+    check_interval_seconds: number
+    alert_thresholds: any
+    business_hours_only: boolean
+    exclude_maintenance_windows: boolean
+    notification_emails: string[]
+    created_at: string
+    updated_at: string
+  }
+
+  return {
+    id: config.id,
+    slaServiceId: config.sla_service_id,
+    creditTiers: config.credit_tiers || [],
+    checkIntervalSeconds: config.check_interval_seconds,
+    alertThresholds: config.alert_thresholds || {},
+    businessHoursOnly: config.business_hours_only,
+    excludeMaintenanceWindows: config.exclude_maintenance_windows,
+    notificationEmails: config.notification_emails || [],
+    createdAt: config.created_at,
+    updatedAt: config.updated_at,
+  }
+}
+
+export function mapSlaIncidentRow(row: unknown): SlaIncident {
+  const incident = row as {
+    id: string
+    sla_service_id: string
+    title: string
+    description: string
+    severity: string
+    status: string
+    started_at: string
+    resolved_at: string | null
+    assigned_to: string | null
+    affected_users: number
+    estimated_revenue_impact: number
+    resolution_notes: string | null
+    created_at: string
+    updated_at: string
+    sla_service?: {
+      id: string
+      name: string
+      client_id: string
+    }
+  }
+
+  return {
+    id: incident.id,
+    slaServiceId: incident.sla_service_id,
+    title: incident.title,
+    description: incident.description,
+    severity: incident.severity as SlaIncidentSeverity,
+    status: incident.status as SlaIncidentStatus,
+    startedAt: incident.started_at,
+    resolvedAt: incident.resolved_at ?? undefined,
+    assignedTo: incident.assigned_to ?? undefined,
+    affectedUsers: incident.affected_users,
+    estimatedRevenueImpact: incident.estimated_revenue_impact,
+    resolutionNotes: incident.resolution_notes ?? undefined,
+    createdAt: incident.created_at,
+    updatedAt: incident.updated_at,
+    slaService: incident.sla_service ? mapSlaServiceRow(incident.sla_service) : undefined,
+  }
+}
+
+export function mapSlaMetricRow(row: unknown): SlaMetric {
+  const metric = row as {
+    id: string
+    sla_service_id: string
+    metric_type: string
+    recorded_at: string
+    value: number
+    unit: string
+    total_checks: number
+    successful_checks: number
+    failed_checks: number
+    monitoring_source: string
+    notes: string | null
+    created_at: string
+    sla_service?: {
+      id: string
+      name: string
+    }
+  }
+
+  return {
+    id: metric.id,
+    slaServiceId: metric.sla_service_id,
+    metricType: metric.metric_type as SlaMetricType,
+    recordedAt: metric.recorded_at,
+    value: metric.value,
+    unit: metric.unit,
+    totalChecks: metric.total_checks,
+    successfulChecks: metric.successful_checks,
+    failedChecks: metric.failed_checks,
+    monitoringSource: metric.monitoring_source,
+    notes: metric.notes ?? undefined,
+    createdAt: metric.created_at,
+    slaService: metric.sla_service ? {
+      id: metric.sla_service.id,
+      name: metric.sla_service.name,
+    } : undefined,
+  }
+}
+
+export function mapSlaCreditRow(row: unknown): SlaCredit {
+  const credit = row as {
+    id: string
+    sla_service_id: string
+    billing_period_start: string
+    billing_period_end: string
+    credit_percentage: number
+    credit_amount: number
+    applied_to_invoice_id: string | null
+    created_at: string
+    updated_at: string
+    sla_service?: {
+      id: string
+      name: string
+      client_id: string
+    }
+  }
+
+  return {
+    id: credit.id,
+    slaServiceId: credit.sla_service_id,
+    billingPeriodStart: credit.billing_period_start,
+    billingPeriodEnd: credit.billing_period_end,
+    creditPercentage: credit.credit_percentage,
+    creditAmount: credit.credit_amount,
+    appliedToInvoiceId: credit.applied_to_invoice_id ?? undefined,
+    createdAt: credit.created_at,
+    updatedAt: credit.updated_at,
+    slaService: credit.sla_service ? mapSlaServiceRow(credit.sla_service) : undefined,
+  }
+}
+
+export function mapSlaReportRow(row: unknown): SlaReport {
+  const report = row as {
+    id: string
+    sla_service_id: string
+    report_type: string
+    period_start: string
+    period_end: string
+    availability_percentage: number
+    total_incidents: number
+    average_response_time: number
+    average_resolution_time: number
+    credits_earned: number
+    report_data: any
+    generated_at: string
+    created_at: string
+    updated_at: string
+    sla_service?: {
+      id: string
+      name: string
+      client_id: string
+    }
+  }
+
+  return {
+    id: report.id,
+    slaServiceId: report.sla_service_id,
+    reportType: report.report_type as SlaReportType,
+    periodStart: report.period_start,
+    periodEnd: report.period_end,
+    availabilityPercentage: report.availability_percentage,
+    totalIncidents: report.total_incidents,
+    averageResponseTime: report.average_response_time,
+    averageResolutionTime: report.average_resolution_time,
+    creditsEarned: report.credits_earned,
+    reportData: report.report_data || {},
+    generatedAt: report.generated_at,
+    createdAt: report.created_at,
+    updatedAt: report.updated_at,
+    slaService: report.sla_service ? mapSlaServiceRow(report.sla_service) : undefined,
+  }
+}
+
+// SLA fetch functions following existing patterns
+export async function fetchSlaServices(): Promise<SlaService[]> {
+  const { data, error } = await supabase
+    .from("sla_services")
+    .select(`
+      *,
+      client:clients(*),
+      sla_configurations(
+        id,
+        credit_tiers,
+        check_interval_seconds,
+        alert_thresholds,
+        business_hours_only,
+        exclude_maintenance_windows,
+        notification_emails
+      )
+    `)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+
+  if (error) {
+    console.error("fetchSlaServices error:", error)
+    return []
+  }
+  return (data ?? []).map(mapSlaServiceRow)
+}
+
+export async function fetchSlaServiceById(slaServiceId: string): Promise<SlaService | null> {
+  const { data, error } = await supabase
+    .from("sla_services")
+    .select(`
+      *,
+      client:clients(*),
+      sla_configurations(
+        id,
+        credit_tiers,
+        check_interval_seconds,
+        alert_thresholds,
+        business_hours_only,
+        exclude_maintenance_windows,
+        notification_emails
+      )
+    `)
+    .eq("id", slaServiceId)
+    .single()
+
+  if (error) {
+    console.error("fetchSlaServiceById error:", error)
+    return null
+  }
+  return data ? mapSlaServiceRow(data) : null
+}
+
+export async function fetchSlaIncidents(slaServiceId?: string): Promise<SlaIncident[]> {
+  let query = supabase
+    .from("sla_incidents")
+    .select(`
+      *,
+      sla_service:sla_services(id, name, client_id)
+    `)
+    .order("started_at", { ascending: false })
+
+  if (slaServiceId) {
+    query = query.eq("sla_service_id", slaServiceId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("fetchSlaIncidents error:", error)
+    return []
+  }
+  return (data ?? []).map(mapSlaIncidentRow)
+}
+
+export async function fetchSlaMetrics(slaServiceId?: string, limit = 1000): Promise<SlaMetric[]> {
+  let query = supabase
+    .from("sla_metrics")
+    .select(`
+      *,
+      sla_service:sla_services(id, name)
+    `)
+    .order("recorded_at", { ascending: false })
+    .limit(limit)
+
+  if (slaServiceId) {
+    query = query.eq("sla_service_id", slaServiceId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("fetchSlaMetrics error:", error)
+    return []
+  }
+  return (data ?? []).map(mapSlaMetricRow)
+}
+
+export async function fetchSlaCredits(slaServiceId?: string): Promise<SlaCredit[]> {
+  let query = supabase
+    .from("sla_credits")
+    .select(`
+      *,
+      sla_service:sla_services(*)
+    `)
+    .order("billing_period_start", { ascending: false })
+
+  if (slaServiceId) {
+    query = query.eq("sla_service_id", slaServiceId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("fetchSlaCredits error:", error)
+    return []
+  }
+  return (data ?? []).map(mapSlaCreditRow)
+}
+
+export async function fetchSlaReports(slaServiceId?: string): Promise<SlaReport[]> {
+  let query = supabase
+    .from("sla_reports")
+    .select(`
+      *,
+      sla_service:sla_services(*)
+    `)
+    .order("generated_at", { ascending: false })
+
+  if (slaServiceId) {
+    query = query.eq("sla_service_id", slaServiceId)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("fetchSlaReports error:", error)
+    return []
+  }
+  return (data ?? []).map(mapSlaReportRow)
 }
