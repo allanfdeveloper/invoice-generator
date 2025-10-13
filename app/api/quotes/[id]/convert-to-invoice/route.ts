@@ -1,67 +1,40 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+import { NextRequest } from "next/server"
+import { withErrorHandler, withRateLimit } from "@/lib/error-handler"
+import { QuoteService } from "@/lib/services/quote-service"
+import { getSupabaseServer } from "@/lib/supabase-server"
+import { HTTP_STATUS } from "@/lib/types/api"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://sgbrlqcquoydwgugaiqn.supabase.co"
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnYnJscWNxdW95ZHdndWdhaXFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyODg4NjksImV4cCI6MjA3Mzg2NDg2OX0.QdfVq-AWsAoufIWe0d4OyursigMHYcerrqVezp7LhKs"
-const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// POST /api/quotes/[id]/convert-to-invoice - Convert quote to invoice
+export const POST = withErrorHandler(
+  withRateLimit(10, 60 * 1000)(async (
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
+    const { id } = await params
+    const userId = req.headers.get("x-user-id")
 
-export async function POST(
-  request: Request,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params
-  try {
-    // Get the auth token from the request header
-    const authHeader = request.headers.get('authorization')
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Not authenticated' },
-        { status: 401 }
+    if (!userId) {
+      return Response.json(
+        { success: false, error: "User authentication required" },
+        { status: HTTP_STATUS.UNAUTHORIZED }
       )
     }
 
-    const token = authHeader.substring(7)
+    // Use the quote service to convert to invoice
+    const quoteService = new QuoteService(userId)
+    const result = await quoteService.convertToInvoice(id)
 
-    // Verify the token and get user
-    const { data: { user }, error } = await supabase.auth.getUser(token)
-
-    if (error || !user) {
-      return NextResponse.json(
-        { error: 'Invalid authentication token' },
-        { status: 401 }
-      )
-    }
-
-    const quoteId = id
-
-    // Call the RPC function to convert quote to invoice
-    const { data: conversionResult, error: conversionError } = await supabase
-      .rpc('convert_quote_to_invoice', {
-        p_quote_id: quoteId
-      })
-
-    if (conversionError) {
-      console.error('Error converting quote to invoice:', conversionError)
-      return NextResponse.json(
-        { error: conversionError.message || 'Failed to convert quote to invoice' },
-        { status: 500 }
-      )
-    }
-
-    // The RPC returns a table, so we need to get the first row
-    const result = conversionResult[0]
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.message },
-        { status: 400 }
+    if (!result.success || !result.data) {
+      return Response.json(
+        { success: false, error: result.error },
+        { status: HTTP_STATUS.INTERNAL_SERVER_ERROR }
       )
     }
 
     // Fetch the created invoice with related data
+    const supabase = getSupabaseServer()
     const { data: invoice, error: invoiceError } = await supabase
-      .from('invoices')
+      .from("invoices")
       .select(`
         *,
         client:clients(*),
@@ -71,28 +44,25 @@ export async function POST(
           item:items(*)
         )
       `)
-      .eq('id', result.invoice_id)
+      .eq("id", result.data)
       .single()
 
     if (invoiceError) {
-      console.error('Error fetching created invoice:', invoiceError)
-      return NextResponse.json(
-        { error: 'Invoice created but failed to fetch details' },
-        { status: 500 }
+      console.error("Error fetching created invoice:", invoiceError)
+      return Response.json(
+        {
+          success: true,
+          message: "Quote converted to invoice successfully, but failed to fetch invoice details",
+          invoiceId: result.data
+        },
+        { status: HTTP_STATUS.INTERNAL_SERVER_ERROR }
       )
     }
 
-    return NextResponse.json({
+    return Response.json({
       success: true,
       message: result.message,
       invoice
     })
-
-  } catch (error) {
-    console.error('Unexpected error in quote to invoice conversion:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
+  })
+)
