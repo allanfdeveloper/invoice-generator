@@ -26,7 +26,7 @@ export enum InvoiceStatus {
   Overdue = "overdue",
 }
 
-export type Page = "dashboard" | "quotes" | "invoices" | "clients" | "settings"
+export type Page = "dashboard" | "quotes" | "invoices" | "clients" | "sla" | "settings"
 
 export interface PaymentInstructions {
   bank: string
@@ -133,4 +133,139 @@ export interface Invoice {
   createdFromQuoteId: string | null
   createdAt: string
   updatedAt: string
+}
+// SLA Related Enums
+export enum SlaMetricType {
+  Availability = "availability",
+  ResponseTime = "response_time",
+  ResolutionTime = "resolution_time",
+  IncidentCount = "incident_count",
+}
+
+export enum IncidentSeverity {
+  Low = "low",
+  Medium = "medium",
+  High = "high",
+  Critical = "critical",
+}
+
+export enum IncidentStatus {
+  Open = "open",
+  Investigating = "investigating",
+  Resolved = "resolved",
+  Closed = "closed",
+}
+
+export enum SlaReportType {
+  Daily = "daily",
+  Weekly = "weekly",
+  Monthly = "monthly",
+  Quarterly = "quarterly",
+}
+
+// SLA Related Interfaces
+export interface SlaService {
+  id: string
+  name: string
+  description: string
+  clientId: string
+  availabilityTarget: number
+  responseTimeTarget: number | null
+  resolutionTimeTarget: number | null
+  monthlyServiceFee: number
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SlaMetric {
+  id: string
+  slaServiceId: string
+  metricType: SlaMetricType
+  recordedAt: string
+  value: number
+  unit: string
+  totalChecks: number
+  successfulChecks: number
+  failedChecks: number
+  monitoringSource: string
+  notes: string
+  createdAt: string
+}
+
+export interface SlaIncident {
+  id: string
+  slaServiceId: string
+  title: string
+  description: string
+  severity: IncidentSeverity
+  status: IncidentStatus
+  startedAt: string
+  detectedAt: string
+  resolvedAt: string | null
+  assignedTo: string | null
+  affectedUsers: number
+  estimatedRevenueImpact: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SlaConfiguration {
+  id: string
+  slaServiceId: string
+  creditTiers: CreditTier[]
+  checkIntervalSeconds: number
+  alertThresholds: Record<string, any>
+  businessHoursOnly: boolean
+  excludeMaintenanceWindows: boolean
+  maintenanceWindows: MaintenanceWindow[]
+  notificationEmails: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreditTier {
+  threshold: number
+  credit: number
+}
+
+export interface MaintenanceWindow {
+  start: string
+  end: string
+  description: string
+}
+
+export interface SlaReport {
+  id: string
+  slaServiceId: string
+  reportType: SlaReportType
+  periodStart: string
+  periodEnd: string
+  availabilityPercentage: number | null
+  averageResponseTime: number | null
+  averageResolutionTime: number | null
+  totalIncidents: number
+  totalDowntimeMinutes: number
+  slaMet: boolean
+  slaBreachDetails: Record<string, any>
+  serviceCreditEarned: boolean
+  creditPercentage: number
+  creditAmount: number
+  generatedAt: string
+  processedForBilling: boolean
+  processedAt: string | null
+}
+
+export interface SlaCredit {
+  id: string
+  slaReportId: string
+  invoiceId: string | null
+  creditAmount: number
+  creditPercentage: number
+  reason: string
+  appliedToInvoice: boolean
+  appliedAt: string | null
+  createdAt: string
+  createdBy: string | null
+  notes: string
 }
