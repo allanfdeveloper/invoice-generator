@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { supabase } from "./supabase"
+import type { User } from "@supabase/supabase-js"
 
 export const TOKEN_COOKIE = "supabase_auth_token"
 
@@ -40,7 +41,7 @@ export function clearToken(): void {
 
 export function useAuth() {
   const [token, setTokenState] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
 
   // Initialize from cookie on mount
   useEffect(() => {
