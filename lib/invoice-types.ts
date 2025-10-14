@@ -215,7 +215,7 @@ export interface SlaConfiguration {
   slaServiceId: string
   creditTiers: CreditTier[]
   checkIntervalSeconds: number
-  alertThresholds: Record<string, any>
+  alertThresholds: Record<string, number | string>
   businessHoursOnly: boolean
   excludeMaintenanceWindows: boolean
   maintenanceWindows: MaintenanceWindow[]
@@ -247,7 +247,7 @@ export interface SlaReport {
   totalIncidents: number
   totalDowntimeMinutes: number
   slaMet: boolean
-  slaBreachDetails: Record<string, any>
+  slaBreachDetails: Record<string, string | number>
   serviceCreditEarned: boolean
   creditPercentage: number
   creditAmount: number

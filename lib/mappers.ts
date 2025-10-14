@@ -511,9 +511,9 @@ export function mapSlaServiceRow(row: unknown): SlaService {
     }
     sla_configurations?: Array<{
       id: string
-      credit_tiers: any
+      credit_tiers: Array<{ threshold: number; credit: number }>
       check_interval_seconds: number
-      alert_thresholds: any
+      alert_thresholds: Record<string, number | string>
       business_hours_only: boolean
       exclude_maintenance_windows: boolean
       notification_emails: string[]
@@ -541,9 +541,9 @@ export function mapSlaConfigurationRow(row: unknown): SlaConfiguration {
   const config = row as {
     id: string
     sla_service_id: string
-    credit_tiers: any
+    credit_tiers: Array<{ threshold: number; credit: number }>
     check_interval_seconds: number
-    alert_thresholds: any
+    alert_thresholds: Record<string, number | string>
     business_hours_only: boolean
     exclude_maintenance_windows: boolean
     notification_emails: string[]
@@ -691,7 +691,7 @@ export function mapSlaReportRow(row: unknown): SlaReport {
     average_response_time: number
     average_resolution_time: number
     credits_earned: number
-    report_data: any
+    report_data: Record<string, unknown>
     generated_at: string
     created_at: string
     updated_at: string

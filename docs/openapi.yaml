@@ -1,0 +1,891 @@
+openapi: 3.0.3
+info:
+  title: Invoice Generator API
+  description: Complete API for managing quotes, invoices, clients, items, packages, and company settings
+  version: 1.0.0
+  contact:
+    name: Development Team
+    email: dev@company.com
+servers:
+  - url: https://your-domain.com/api
+    description: Production server
+  - url: http://localhost:3000/api
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /quotes:
+    get:
+      tags:
+        - Quotes
+      summary: Get all quotes
+      description: Retrieve a paginated list of quotes for the authenticated user
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, accepted, declined, expired]
+        - name: clientId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Quotes
+      summary: Create a new quote
+      description: Create a new quote with items for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQuoteRequest'
+      responses:
+        '201':
+          description: Quote created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /quotes/{id}:
+    get:
+      tags:
+        - Quotes
+      summary: Get quote by ID
+      description: Retrieve a specific quote by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - Quotes
+      summary: Update quote
+      description: Update an existing quote
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateQuoteRequest'
+      responses:
+        '200':
+          description: Quote updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags:
+        - Quotes
+      summary: Delete quote
+      description: Delete a quote (only if not accepted or converted)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Quote deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '403':
+          description: Quote cannot be deleted in current status
+
+  /quotes/{id}/convert-to-invoice:
+    post:
+      tags:
+        - Quotes
+      summary: Convert quote to invoice
+      description: Convert a quote to an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConvertQuoteRequest'
+      responses:
+        '200':
+          description: Quote converted to invoice successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices:
+    get:
+      tags:
+        - Invoices
+      summary: Get all invoices
+      description: Retrieve a paginated list of invoices for the authenticated user
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, sent, partially_paid, paid, overdue]
+        - name: clientId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceListResponse'
+
+    post:
+      tags:
+        - Invoices
+      summary: Create a new invoice
+      description: Create a new invoice with items for the authenticated user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceRequest'
+      responses:
+        '201':
+          description: Invoice created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+
+  /invoices/{id}:
+    get:
+      tags:
+        - Invoices
+      summary: Get invoice by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceResponse'
+
+    put:
+      tags:
+        - Invoices
+      summary: Update invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateInvoiceRequest'
+      responses:
+        '200':
+          description: Invoice updated successfully
+
+    delete:
+      tags:
+        - Invoices
+      summary: Delete invoice
+      description: Delete an invoice (only if draft)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Invoice deleted successfully
+
+  /invoices/{id}/record-payment:
+    post:
+      tags:
+        - Invoices
+      summary: Record payment
+      description: Record a payment for an invoice
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordPaymentRequest'
+      responses:
+        '200':
+          description: Payment recorded successfully
+
+  /clients:
+    get:
+      tags:
+        - Clients
+      summary: Get all clients
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientListResponse'
+
+    post:
+      tags:
+        - Clients
+      summary: Create a new client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '201':
+          description: Client created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+
+  /clients/{id}:
+    get:
+      tags:
+        - Clients
+      summary: Get client by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClientResponse'
+
+    put:
+      tags:
+        - Clients
+      summary: Update client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        '200':
+          description: Client updated successfully
+
+    delete:
+      tags:
+        - Clients
+      summary: Delete client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Client deleted successfully
+
+  /company/settings:
+    get:
+      tags:
+        - Company Settings
+      summary: Get company settings
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanySettingsResponse'
+
+    put:
+      tags:
+        - Company Settings
+      summary: Update company settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCompanySettingsRequest'
+      responses:
+        '200':
+          description: Settings updated successfully
+
+  /company/logo:
+    post:
+      tags:
+        - Company Settings
+      summary: Upload company logo
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Logo uploaded successfully
+
+    delete:
+      tags:
+        - Company Settings
+      summary: Delete company logo
+      responses:
+        '200':
+          description: Logo deleted successfully
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: apiKey
+      in: header
+      name: x-user-id
+
+  schemas:
+    Quote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quoteNumber:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, accepted, declined, expired]
+        dateIssued:
+          type: string
+          format: date
+        validUntil:
+          type: string
+          format: date
+        subtotalExclVat:
+          type: number
+          format: decimal
+        vatAmount:
+          type: number
+          format: decimal
+        totalInclVat:
+          type: number
+          format: decimal
+        depositPercentage:
+          type: number
+          format: decimal
+        depositAmount:
+          type: number
+          format: decimal
+        balanceRemaining:
+          type: number
+          format: decimal
+        notes:
+          type: string
+        termsText:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        client:
+          $ref: '#/components/schemas/Client'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoiceNumber:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, partially_paid, paid, overdue]
+        dateIssued:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        subtotalExclVat:
+          type: number
+          format: decimal
+        vatAmount:
+          type: number
+          format: decimal
+        totalInclVat:
+          type: number
+          format: decimal
+        depositRequired:
+          type: boolean
+        depositAmount:
+          type: number
+          format: decimal
+        balanceRemaining:
+          type: number
+          format: decimal
+        paymentInstructions:
+          $ref: '#/components/schemas/PaymentInstructions'
+        createdAt:
+          type: string
+          format: date-time
+        client:
+          $ref: '#/components/schemas/Client'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        company:
+          type: string
+        email:
+          type: string
+          format: email
+        billingAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        vatNumber:
+          type: string
+        phone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        description:
+          type: string
+        unitPrice:
+          type: number
+          format: decimal
+        quantity:
+          type: number
+          format: decimal
+        taxable:
+          type: boolean
+        itemType:
+          type: string
+          enum: [fixed, hourly, expense]
+        unit:
+          type: string
+
+    PaymentInstructions:
+      type: object
+      properties:
+        bank:
+          type: string
+        accountName:
+          type: string
+        accountNumber:
+          type: string
+        branchCode:
+          type: string
+        swift:
+          type: string
+
+    CreateQuoteRequest:
+      type: object
+      required:
+        - clientId
+        - dateIssued
+        - validUntil
+        - items
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        dateIssued:
+          type: string
+          format: date
+        validUntil:
+          type: string
+          format: date
+        depositPercentage:
+          type: number
+          format: decimal
+        notes:
+          type: string
+        termsText:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequest'
+
+    CreateInvoiceRequest:
+      type: object
+      required:
+        - clientId
+        - dateIssued
+        - dueDate
+        - items
+      properties:
+        clientId:
+          type: string
+          format: uuid
+        dateIssued:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        depositRequired:
+          type: boolean
+        paymentInstructions:
+          $ref: '#/components/schemas/PaymentInstructions'
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemRequest'
+
+    ItemRequest:
+      type: object
+      required:
+        - description
+        - unitPrice
+        - quantity
+        - taxable
+        - itemType
+        - unit
+      properties:
+        description:
+          type: string
+        unitPrice:
+          type: number
+          format: decimal
+        quantity:
+          type: number
+          format: decimal
+        taxable:
+          type: boolean
+        itemType:
+          type: string
+          enum: [fixed, hourly, expense]
+        unit:
+          type: string
+
+    CreateClientRequest:
+      type: object
+      required:
+        - name
+        - company
+        - email
+      properties:
+        name:
+          type: string
+        company:
+          type: string
+        email:
+          type: string
+          format: email
+        billingAddress:
+          type: string
+        deliveryAddress:
+          type: string
+        vatNumber:
+          type: string
+        phone:
+          type: string
+
+    QuoteListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            quotes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Quote'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    InvoiceListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            invoices:
+              type: array
+              items:
+                $ref: '#/components/schemas/Invoice'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    ClientListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            clients:
+              type: array
+              items:
+                $ref: '#/components/schemas/Client'
+            pagination:
+              $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    QuoteResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Quote'
+        message:
+          type: string
+
+    InvoiceResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Invoice'
+        message:
+          type: string
+
+    ClientResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/Client'
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+  responses:
+    Unauthorized:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

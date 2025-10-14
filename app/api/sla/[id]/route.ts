@@ -4,9 +4,10 @@ import { cookies } from "next/headers"
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = cookies()
     const token = cookieStore.get("sb-access-token")?.value
 
@@ -36,7 +37,7 @@ export async function GET(
           notification_emails
         )
       `)
-      .eq("id", params.id)
+      .eq("id", id)
       .single()
 
     if (error) {
@@ -57,9 +58,10 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = cookies()
     const token = cookieStore.get("sb-access-token")?.value
 
@@ -76,7 +78,7 @@ export async function PUT(
     supabase.auth.setSession(token)
 
     const body = await req.json()
-    const { id, ...updateData } = body
+    const { id: _, ...updateData } = body
 
     const { data: slaService, error } = await supabase
       .from("sla_services")
@@ -84,7 +86,7 @@ export async function PUT(
         ...updateData,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", params.id)
+      .eq("id", id)
       .select()
       .single()
 
@@ -106,9 +108,10 @@ export async function PUT(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = cookies()
     const token = cookieStore.get("sb-access-token")?.value
 
@@ -127,7 +130,7 @@ export async function DELETE(
     const { error } = await supabase
       .from("sla_services")
       .delete()
-      .eq("id", params.id)
+      .eq("id", id)
 
     if (error) {
       console.error("Error deleting SLA service:", error)

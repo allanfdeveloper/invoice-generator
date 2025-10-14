@@ -4,9 +4,10 @@ import { cookies } from "next/headers"
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = cookies()
     const token = cookieStore.get("sb-access-token")?.value
 
@@ -32,7 +33,7 @@ export async function GET(
           client:clients(*)
         )
       `)
-      .eq("id", params.id)
+      .eq("id", id)
       .single()
 
     if (error) {
@@ -56,9 +57,10 @@ export async function GET(
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cookieStore = cookies()
     const token = cookieStore.get("sb-access-token")?.value
 
@@ -77,7 +79,7 @@ export async function DELETE(
     const { error } = await supabase
       .from("sla_configurations")
       .delete()
-      .eq("id", params.id)
+      .eq("id", id)
 
     if (error) {
       console.error("Error deleting SLA configuration:", error)
