@@ -234,8 +234,10 @@ export function InvoicePDFPreview({ invoice, showPreview = false }: InvoicePDFPr
                       <td className="p-3 text-left border-b border-gray-200 text-sm">
                         {item.item.name}
                         {item.item.description && (
-                          <br />
-                          <span className="text-gray-500 text-xs">{item.item.description}</span>
+                          <>
+                            <br />
+                            <span className="text-gray-500 text-xs">{item.item.description}</span>
+                          </>
                         )}
                       </td>
                       <td className="p-3 text-center border-b border-gray-200 text-sm">{item.quantity}</td>

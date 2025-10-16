@@ -30,7 +30,7 @@ export async function GET(
       description: data.description,
       priceExclVat: data.price_excl_vat,
       priceInclVat: data.price_incl_vat,
-      items: data.package_items?.map((pi: any) => pi.items) || [],
+      items: data.package_items?.map((pi: { items: unknown }) => pi.items) || [],
       createdAt: data.created_at,
       updatedAt: data.updated_at,
     })

@@ -88,7 +88,47 @@ export async function GET(
   }
 }
 
-function generateInvoiceHTML(invoice: any): string {
+function generateInvoiceHTML(invoice: {
+  invoice_number: string;
+  status: string;
+  date_issued: string;
+  due_date: string;
+  created_from_quote_id?: string;
+  subtotal_excl_vat: number;
+  vat_amount: number;
+  deposit_amount: number;
+  total_incl_vat: number;
+  balance_remaining: number;
+  payment_instructions?: {
+    bank?: string;
+    accountName?: string;
+    accountNumber?: string;
+  };
+  company_settings: {
+    company_name: string;
+    address: string;
+    email: string;
+    phone: string;
+    currency?: string;
+    vat_percentage?: number;
+    terms_text?: string;
+  };
+  client: {
+    name: string;
+    company?: string;
+    email: string;
+    phone: string;
+  };
+  invoice_items: Array<{
+    quantity: number;
+    unit_price: number;
+    total_price: number;
+    item: {
+      description: string;
+      unit?: string;
+    };
+  }>;
+}): string {
   const company = invoice.company_settings
   const client = invoice.client
   const items = invoice.invoice_items
@@ -156,7 +196,7 @@ function generateInvoiceHTML(invoice: any): string {
           </tr>
         </thead>
         <tbody>
-          ${items.map((item: any) => `
+          ${items.map((item) => `
             <tr>
               <td style="padding: 12px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 12px;">
                 ${item.item.description}

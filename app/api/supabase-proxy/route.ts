@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
         if (filters?.in) {
           Object.entries(filters.in).forEach(([column, value]) => {
-            query = query.in(column, value as readonly any[])
+            query = query.in(column, value as readonly unknown[])
           })
         }
 

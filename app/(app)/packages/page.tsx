@@ -118,7 +118,7 @@ export default function PackagesPage() {
       created_at: pkg.created_at,
       updated_at: pkg.updated_at,
     })) || []
-  }, [])
+  }, [supabase])
 
   const fetchItems = useCallback(async (): Promise<Item[]> => {
     const { data, error } = await supabase

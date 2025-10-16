@@ -107,7 +107,7 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [form])
 
   const isSubmitting = form.formState.isSubmitting
 

@@ -25,7 +25,7 @@ export async function GET() {
       description: pkg.description,
       priceExclVat: pkg.price_excl_vat,
       priceInclVat: pkg.price_incl_vat,
-      items: pkg.package_items?.map((pi: any) => pi.items) || [],
+      items: pkg.package_items?.map((pi: { items: unknown }) => pi.items) || [],
       createdAt: pkg.created_at,
       updatedAt: pkg.updated_at,
     })) || []

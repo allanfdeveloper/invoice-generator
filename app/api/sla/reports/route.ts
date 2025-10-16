@@ -148,7 +148,13 @@ export async function POST(req: Request) {
   }
 }
 
-async function generateReport(body: any, supabase: any) {
+async function generateReport(body: {
+  sla_service_id: string;
+  report_type: string;
+  period_start: string;
+  period_end: string;
+  action?: string;
+}, supabase: ReturnType<typeof createClient>) {
   try {
     const { sla_service_id, report_type, period_start, period_end } = body
 
@@ -212,11 +218,11 @@ async function generateReport(body: any, supabase: any) {
       },
       incidents_summary: {
         total_incidents: incidents?.length || 0,
-        by_severity: incidents?.reduce((acc: any, incident: any) => {
+        by_severity: incidents?.reduce((acc: Record<string, number>, incident) => {
           acc[incident.severity] = (acc[incident.severity] || 0) + 1
           return acc
         }, {}) || {},
-        by_status: incidents?.reduce((acc: any, incident: any) => {
+        by_status: incidents?.reduce((acc: Record<string, number>, incident) => {
           acc[incident.status] = (acc[incident.status] || 0) + 1
           return acc
         }, {}) || {},
@@ -272,7 +278,18 @@ async function generateReport(body: any, supabase: any) {
   }
 }
 
-function calculateSLAMetrics(metrics: any[], incidents: any[], slaService: any) {
+function calculateSLAMetrics(metrics: Array<{
+  metric_type: string;
+  total_checks?: number;
+  successful_checks?: number;
+  value?: number;
+}>, incidents: Array<{
+  severity: string;
+  status: string;
+}>, slaService: {
+  availability_target?: number;
+  monthly_service_fee?: number;
+}) {
   // Calculate availability percentage
   const availabilityMetrics = metrics?.filter(m => m.metric_type === 'availability') || []
   let availabilityPercentage = 100 // Default to 100% if no metrics
