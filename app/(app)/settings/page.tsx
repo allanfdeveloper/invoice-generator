@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { Upload, Save } from "lucide-react"
+import { Save } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Form,
@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { fetchCompanySettings, mapSettingsRow } from "@/lib/mappers"
+import { fetchCompanySettings } from "@/lib/mappers"
 import { supabase } from "@/lib/supabase"
 import type { CompanySettings } from "@/lib/invoice-types"
 
@@ -74,9 +74,9 @@ export default function SettingsPage() {
 
   useEffect(() => {
     loadSettings()
-  }, [])
+  }, [loadSettings])
 
-  const loadSettings = async () => {
+  const loadSettings = useCallback(async () => {
     try {
       setLoading(true)
       const data = await fetchCompanySettings()
@@ -107,7 +107,7 @@ export default function SettingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const isSubmitting = form.formState.isSubmitting
 

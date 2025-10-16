@@ -109,7 +109,7 @@ const mockService: SlaServiceWithDetails = {
     {
       id: "metric-1",
       slaServiceId: "1",
-      metricType: "availability" as any,
+      metricType: "availability" as const,
       recordedAt: "2024-01-20T12:00:00Z",
       value: 99.95,
       unit: "%",
@@ -125,7 +125,7 @@ const mockService: SlaServiceWithDetails = {
     {
       id: "report-1",
       slaServiceId: "1",
-      reportType: "monthly" as any,
+      reportType: "monthly" as const,
       periodStart: "2024-01-01T00:00:00Z",
       periodEnd: "2024-01-31T23:59:59Z",
       availabilityPercentage: 99.95,

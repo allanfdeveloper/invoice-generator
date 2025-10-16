@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server"
+
+export const runtime = 'nodejs'
 import { withErrorHandler, withRateLimit } from "@/lib/error-handler"
 import { QuoteService } from "@/lib/services/quote-service"
 import { parsePaginationParams, parseFilters } from "@/lib/types/api"

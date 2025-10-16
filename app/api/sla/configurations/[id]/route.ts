@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+
+export const runtime = 'nodejs'
 import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 

@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server"
 import { withErrorHandler, withRateLimit } from "@/lib/error-handler"
+
+export const runtime = 'nodejs'
 import { InvoiceService } from "@/lib/services/invoice-service"
 import { parsePaginationParams, parseFilters } from "@/lib/types/api"
 import { HTTP_STATUS } from "@/lib/types/api"

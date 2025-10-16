@@ -1,4 +1,6 @@
 import { NextRequest } from "next/server"
+
+export const runtime = 'nodejs'
 import { withErrorHandler, withRateLimit } from "@/lib/error-handler"
 import { InvoiceService } from "@/lib/services/invoice-service"
 import { HTTP_STATUS } from "@/lib/types/api"

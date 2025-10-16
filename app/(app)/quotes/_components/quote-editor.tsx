@@ -85,7 +85,7 @@ export function QuoteEditor({ quote, open = true, onOpenChange, onSaved, onCance
     if (open) {
       loadData()
     }
-  }, [open])
+  }, [open, loadData])
 
   useEffect(() => {
     if (quote) {
@@ -176,14 +176,13 @@ export function QuoteEditor({ quote, open = true, onOpenChange, onSaved, onCance
     }
   }
 
-  const calculateTotals = useCallback((currentItems: Item[]) => {
+  const calculateTotals = useCallback((currentItems: Item[], depositPercentage: number) => {
     console.log('calculateTotals called with items:', currentItems.length)
     const subtotalExclVat = currentItems.reduce((acc, item) => acc + item.unitPrice * item.qty, 0)
     const taxableAmount = currentItems.filter(i => i.taxable).reduce((acc, item) => acc + item.unitPrice * item.qty, 0)
     const vatPercentage = settings?.vatPercentage || 0
     const vatAmount = taxableAmount * (vatPercentage / 100)
     const totalInclVat = subtotalExclVat + vatAmount
-    const depositPercentage = form.watch("depositPercentage")
     const depositAmount = totalInclVat * (depositPercentage / 100)
     const balanceRemaining = totalInclVat - depositAmount
 
@@ -202,9 +201,10 @@ export function QuoteEditor({ quote, open = true, onOpenChange, onSaved, onCance
       depositAmount,
       balanceRemaining,
     }
-  }, [settings?.vatPercentage, form.watch]);
+  }, [settings?.vatPercentage]);
 
-  const totals = React.useMemo(() => calculateTotals(items), [items, calculateTotals]);
+  const depositPercentage = form.watch("depositPercentage")
+  const totals = React.useMemo(() => calculateTotals(items, depositPercentage), [items, depositPercentage, calculateTotals]);
 
   // Generate preview quote data for PDF
   const generatePreviewQuote = useCallback(() => {
@@ -251,7 +251,7 @@ export function QuoteEditor({ quote, open = true, onOpenChange, onSaved, onCance
       isMounted = false; // Set flag to false when component unmounts
       clearTimeout(timer);
     };
-  }, [items, form.watch("depositPercentage")]);
+  }, [items, depositPercentage]);
 
   const addItem = useCallback(() => {
     const newItem: Item = {

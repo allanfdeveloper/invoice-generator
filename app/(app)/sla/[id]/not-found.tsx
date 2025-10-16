@@ -13,7 +13,7 @@ export default function NotFound() {
           </div>
           <CardTitle className="text-2xl">SLA Service Not Found</CardTitle>
           <CardDescription>
-            The SLA service you're looking for doesn't exist or has been removed.
+            The SLA service you&apos;re looking for doesn&apos;t exist or has been removed.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
